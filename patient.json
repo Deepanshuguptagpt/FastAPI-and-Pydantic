@@ -1,0 +1,5 @@
+{"P001":{"name":"John Doe","age":30,"gender":"Male","diagnosis":"Flu","treatment":"Rest and hydration","height":162},
+"P002":{"name":"Jane Smith","age":25,"gender":"Female","diagnosis":"Cold","treatment":"Over-the-counter medication","height":170},
+"P003":{"name":"Alice Johnson","age":40,"gender":"Female","diagnosis":"Diabetes","treatment":"Insulin therapy","height":176},
+"P004":{"name":"Bob Brown","age":50,"gender":"Male","diagnosis":"Hypertension","treatment":"Lifestyle changes and medication","height":158},
+"P005":{"name":"Charlie Davis","age":35,"gender":"Male","diagnosis":"Asthma","treatment":"Inhalers and avoiding triggers","height":167}}
