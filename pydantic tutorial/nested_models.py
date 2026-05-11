@@ -19,3 +19,4 @@ patient_info = {'name':'Deepak','age':30,'gender':'male','address':address}
 patient = Patient(**patient_info)
 
 print(patient)
+print(patient.address.city)
