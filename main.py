@@ -1,24 +1,43 @@
 import json
 from fastapi import FastAPI,Path,HTTPException,Query
-from pydantic import BaseModel,EmailStr,AnyUrl,Field
-from typing import List,Dict, Optional,Annotated
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel,EmailStr,AnyUrl,Field,computed_field
+from typing import List,Dict, Optional,Annotated,Literal
 
 class Patient(BaseModel):
-    name : Annotated[str,Field(max_length=50, description="Name must be a string with a maximum length of 50 characters", example="John Doe")]
-    email: EmailStr
-    LinkedIn : Optional[AnyUrl] = None
-    age : int = Field(..., gt=0, description="Age must be a positive integer")
-    height : float = Field(..., gt=0, description="Height must be a positive number")
-    allergies : Annotated[Optional[List[str]], Field(default=None,max_length = 5, description="Maximum of 5 allergies allowed")]
-    contact_info : Dict[str, str]
+    id: str =Annotated[str,Field(..., description="The unique identifier for the patient", example="P001")]
+    name: str= Annotated[str,Field(..., description="The name of the patient", example="John Doe")]
+    age: int = Annotated[int,Field(..., description="The age of the patient", example=30)]
+    gender: str = Annotated[Literal['male','female','other'],Field(..., description="The gender of the patient  (male, female, other)", example="male")]
+    diagnosis: Optional[str] = None
+    treatment: Optional[str] = None
+    height: int = Annotated[int,Field(...,gt=0, description="The height of the patient in centimeters", example=175)]
+    weight: int = Annotated[int,Field(...,gt=0, description="The weight of the patient in kilograms", example=70)]
+    
+    @computed_field
+    @property
+    def bmi(self)->float:
+            bmi = self.weight / (self.height ** 2)
+            return round(bmi, 2)
+    
+    @computed_field
+    @property
+    def verdict(self)->str:
+        if self.bmi < 18.5:
+            return "Underweight"
+        elif 18.5 <= self.bmi < 25:
+            return "Normal weight"
+        elif 25 <= self.bmi < 30:
+            return "Overweight"
+        else:
+            return "Obese"
 
 app = FastAPI()
 
 def insert_patient_data(patient:Patient):
     print(patient.name,patient.age)
-    print(patient.email,patient.LinkedIn)
 
-patient_info = {'name':'Deepak','email':'deepak@gmail.com','LinkedIn':'https://www.linkedin.com/in/deepak','age':30,'height':5.9,'allergies':['pollen','dust'],'contact_info':{'phone':'123-456-7890'}}
+patient_info = {'id':'P001','name':'Deepak','age':30,'gender':'male','diagnosis':'Hypertension','treatment':'Medication','height':175,'weight':70}
 patient1 = Patient(**patient_info)
 insert_patient_data(patient1)
 
@@ -26,6 +45,11 @@ def load_data():
     with open('patient.json', 'r') as file:
         data = json.load(file)
     return data
+
+def save_data(data):
+    with open('patient.json', 'w') as f:
+        json.dump(data, f)
+
 
 @app.get("/")
 def hello():
@@ -63,3 +87,21 @@ def sort_patients(sort_by:str = Query(...,description="The field to sort patient
     sorted_data = sorted(data.values(), key = lambda x : x.get(sort_by,0),reverse =(sort_order))
 
     return sorted_data 
+
+@app.post('/create')
+def create_patient(patient:Patient):
+    data = load_data()
+
+    # Check if patient with the same ID already exists    
+    if patient.id in data:
+        raise HTTPException(status_code = 400, detail = "Patient with this ID already exists")
+    
+    #Add new Patient to data
+    data[patient.id] = patient.model_dump(exclude=['id'])
+
+
+    #save into the json file
+    save_data(data)
+
+    return JSONResponse(content={"message": "Patient created successfully", "patient_id": patient.id}, status_code=201)
+    
