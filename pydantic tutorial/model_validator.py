@@ -11,7 +11,6 @@ class Patient(BaseModel):
     contact_info : Dict[str, str]
 
     @model_validator(mode = 'after')
-    @classmethod
     def emergency_contact_info(self):
         if 'emergency' not in self.contact_info:
             raise ValueError("Emergency contact info is required")
